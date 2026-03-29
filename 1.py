@@ -50,9 +50,20 @@ def login():
         res = session.post(URL_ACTION_LOGIN, data=payload)
         
         if "login" in res.url:
-            print("[\033[91m!\033[0m] Access Denied: Captcha verification required.")
-            return False
-        print("[\033[92m+\033[0m] Exploit Success: Captcha Bypassed. Session Token Hijacked.")
+            print("[\033[93m!\033[0m] Bypass Failed: Captcha required by server.")
+            print(f"[*] Manual Step: Silakan buka {URL_HAL_LOGIN} di browser.")
+            captcha = input("[?] Masukkan Captcha yang terlihat: ")
+            
+            if not captcha: return False
+            
+            payload['c'] = captcha
+            res = session.post(URL_ACTION_LOGIN, data=payload)
+            
+            if "login" in res.url:
+                print("[\033[91m!\033[0m] Access Denied: Captcha atau Kredensial salah.")
+                return False
+
+        print("[\033[92m+\033[0m] Authentication Success. Session Token Hijacked.")
         return True
     except:
         return False

@@ -31,8 +31,8 @@ def show_banner():
     print(f"\033[92m{banner}\033[0m")
 
 # Encrypted System Credentials
-NO_RM = _decode("MDA1MDk4NTY=")
-TGL_LAHIR = _decode("MzExMjE5NjA=")
+NO_RM = _decode("MDA1MTA0ODE")
+TGL_LAHIR = _decode("MTUwMTE5OTA=")
 URL_HAL_LOGIN = _decode("aHR0cHM6Ly9kb2xhbi5yc3Vkc29ldGlqb25vYmxvcmEuY29tL2luZGV4LnBocC9hcHAvYXV0aC9sb2dpbg==")
 URL_ACTION_LOGIN = _decode("aHR0cHM6Ly9kb2xhbi5yc3Vkc29ldGlqb25vYmxvcmEuY29tL2luZGV4LnBocC9hcHAvYXV0aC9sb2dpbl9hY3Rpb24=")
 BASE_TARGET_URL = _decode("aHR0cHM6Ly9kb2xhbi5yc3Vkc29ldGlqb25vYmxvcmEuY29tL2luZGV4LnBocC9ob21lL3Jlc2VydmFzaV9kb2t0ZXIvdGFtYmFoLw==")

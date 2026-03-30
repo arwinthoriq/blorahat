@@ -456,6 +456,17 @@ def infrastructure_audit():
             if result == 0:
                 print(f" [{ts}] Port {str(port).ljust(5)} ({service.ljust(10)}) : [\033[91mOPEN\033[0m]")
                 open_ports += 1
+                
+                # Enhanced Probing untuk Layanan Web (80, 443, 8080)
+                if port in [80, 443, 8080]:
+                    try:
+                        proto = "https" if port == 443 else "http"
+                        p_url = f"{proto}://{domain}:{port}/"
+                        h_res = session.head(p_url, timeout=2, allow_redirects=True)
+                        server_ver = h_res.headers.get('Server', 'Not Disclosed')
+                        print(f"      |_ HTTP Server  : {server_ver}")
+                    except: pass
+
                 try:
                     sock.send(b"\r\n")
                     banner = sock.recv(1024).decode('utf-8', errors='ignore').strip()

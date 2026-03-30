@@ -218,7 +218,8 @@ def parameter_discovery_audit():
                                 if _decode("QWxhbWF0") in text:
                                     address = text.split(":")[-1].strip()
                         
-                        if name != "Unknown" and address != "Tidak Ditemukan":
+                        # Validasi Ketat: Pastikan nama dan alamat tidak kosong dan bukan placeholder
+                        if name.strip() and name != "Unknown" and address.strip() and address != "Tidak Ditemukan":
                             found_valid = True
                             
                             # Masking: 2 huruf depan dan 1 huruf belakang

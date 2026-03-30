@@ -131,6 +131,37 @@ def audit_security_config():
                 print(f" [\033[92m✓\033[0m] Path {p.ljust(12)} : Secure ({r.status_code})")
         except: pass
 
+def parameter_discovery_audit():
+    print("[*] Starting Parameter Discovery Audit (Authenticated)...")
+    target_home = "https://dolan.rsudsoetijonoblora.com/index.php/home"
+    
+    try:
+        res = session.get(target_home, timeout=10)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        links = soup.find_all('a', href=True)
+        
+        discovered = []
+        print(f"\n[+] Analyzing {len(links)} internal links for tamperable parameters...")
+        
+        for link in links:
+            href = link['href']
+            # Mencari pola URL yang memiliki angka (ID) atau query string (?)
+            if any(char.isdigit() for char in href) or "?" in href:
+                if href not in discovered and "logout" not in href.lower():
+                    discovered.append(href)
+                    
+        if discovered:
+            print(f"[*] Found {len(discovered)} potential targets for Parameter Tampering:\n")
+            for d in discovered:
+                param_type = "Query String" if "?" in d else "Path Variable (ID)"
+                print(f" [\033[93m!\033[0m] URL   : {d}")
+                print(f"     Type  : {param_type}")
+                print(f"     Status: \033[93mReady for Manipulation Test\033[0m\n")
+        else:
+            print("[!] No obvious tamperable parameters found on the dashboard.")
+    except Exception as e:
+        print(f"[!] Discovery Error: {str(e)}")
+
 def start_process(start_range, end_range):
     if login():
         print(f"[*] Starting IDOR Scan for {end_range - start_range + 1} records...\n")
@@ -145,6 +176,7 @@ def main_menu():
         print(" [1] Auth Test (Captcha Bypass Testing)")
         print(" [2] IDOR Scan (Input Jumlah Data)")
         print(" [3] Security Config Audit (Headers & Files)")
+        print(" [4] Parameter Discovery (URL Tampering Scan)")
         print(" [0] Exit")
         print("\n")
         
@@ -165,6 +197,10 @@ def main_menu():
         elif choice == '3':
             if login():
                 audit_security_config()
+            input("\nTekan Enter untuk kembali ke menu...")
+        elif choice == '4':
+            if login():
+                parameter_discovery_audit()
             input("\nTekan Enter untuk kembali ke menu...")
         elif choice == '0':
             print("Happy Auditing!")

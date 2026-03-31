@@ -471,13 +471,19 @@ def infrastructure_audit():
                         p_url = f"http://{domain}:8080/"
                         # 1. Cek Kerentanan Directory Listing (Critical Leakage)
                         r8 = session.get(p_url, timeout=3)
-                        if _decode("SW5kZXggb2YgLw==") in r8.text:
-                            print(f"      |_ [\033[91m!\033[0m] {_decode('RGlyZWN0b3J5IExpc3RpbmcgVGVyZGV0ZWtzaSAoQ3JpdGl0YWwp')}")
+                        is_dir_list = _decode("SW5kZXggb2YgLw==") in r8.text
+                        status_dir = "[\033[91mVULNERABLE!\033[0m]" if is_dir_list else "[\033[92mSAFE\033[0m]"
+                        print(f"      |_ Check: Directory Listing        {status_dir}")
                         
                         # 2. Scanning Sensitive Admin/Config Path Discovery
                         for path in ["manager/html", "phpmyadmin", ".env", "config.php"]:
-                            if session.get(p_url + path, timeout=2).status_code == 200:
-                                print(f"      |_ [\033[91m!\033[0m] {_decode('U2Vuc2l0aXZlIEFkbWluIFBhdGggRm91bmQ=')}: {path}")
+                            try:
+                                r_path = session.get(p_url + path, timeout=2)
+                                is_found = r_path.status_code == 200
+                                status_p = "[\033[91mVULNERABLE!\033[0m]" if is_found else "[\033[92mSAFE\033[0m]"
+                                print(f"      |_ Check: /{path.ljust(21)} {status_p}")
+                            except:
+                                print(f"      |_ Check: /{path.ljust(21)} [TIMEOUT]")
                     except: pass
 
                 try:
